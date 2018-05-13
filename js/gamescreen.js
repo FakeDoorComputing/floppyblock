@@ -1,23 +1,23 @@
-var width, height, canvas, cv, distance=200, wallwidth=20, playerspeed=4;
-var gamespeed=25, score=0, upordown=0, canheight, runtime=0;
+var width, height, chunkwidth, chunkheight, canvas, cv, distance=200, wallwidth, playerspeed=1;
+var gamespeed=30, score=0, upordown=0, runtime=0;
 var wall={"x":[],"y":[],"l":[],"c":[]};
 var speed=5, running=true, playermove=false, hit=false, resize=0;
 var player={"x":50,"y":100,"xl":50,"yl":50};
-var level={"music":["snd/levelOne.mp3","snd/levelTwo.mp3","snd/levelThree.mp3"]}
+var level={"music":["snd/levelOne.mp3","snd/levelTwo.mp3","snd/levelThree.mp3","snd/levelFour.mp3"]}
 var music=new Audio(level.music[0]);
 var defeat=new Audio("snd/Defeat.mp3");
-var status, canvascolour;
+var status, canvascolour, nowheight;
 
 $(document).on("pagecreate", "#gamescreen", function(){
   $("#gamescreen").on("click",function(){
     playermove=true;
     upordown=0;
+    nowheight=player.y;
   })
   setcanvas();
   screensize();
   walls();
-  music.play();
-  status="play";
+  fadeinaudio(music);
   drawgamescreen();
 })
 
@@ -30,11 +30,14 @@ function setcanvas(){ /* set the canvas variables */
 function screensize(){ /* set the screensize */
   height=$(window).height();
   width=$(window).width();
-  canheight=height-10;
-  cvs.width=width-10;
-  cvs.height=canheight;
+  cvs.width=width;
+  cvs.height=height;
+  chunkheight=height/100;
+  chunkwidth=width/100;
   canvascolour=randomcolour();
-  console.log("H "+height+" W "+width+" ch "+canheight+" cvw "+cvs.width) // NOTE: remove when done
+  wallwidth=chunkwidth;
+  player={"x":50,"y":100,"xl":chunkwidth*5,"yl":chunkwidth*5};
+  console.log(chunkwidth+" "+player.xl) // NOTE: remove when done
   return;
 }
 
@@ -101,8 +104,11 @@ function calculate(){
   runtime++ /* increase the runtime counter */
   if (playermove){ /* if the screen has been tapped */
     upordown++; /* increase the counter */
-    if (player.y>0&&upordown<40){ /* if the player is not at the top of the screen already */
-      player.y-=playerspeed+1; /* remove this amount (go up) */
+    if (player.y>=0&&upordown<40){ /* if the player is not at the top of the screen already */
+      player.y-=chunkheight*playerspeed; /* remove this amount (go up) */
+      if (player.y<=nowheight-(chunkheight*33)){ /* make sure that the jump is no more than 1/3 screen height */
+        upordown=40;
+      }
     }
     if (upordown==40){
       upordown=0; /* reset the counter */
@@ -110,15 +116,15 @@ function calculate(){
     }
   }
   if (!playermove){
-    player.y+=playerspeed; /* player drop */
+    player.y+=chunkheight*playerspeed; /* player drop */
   }
   checkposition();
   if (hit){
     runtime=0; /* reset the runtime counter */
     resize++; /* start shrinking the player */
     if (resize<10){
-      player.xl--;
-      player.yl--;
+      player.xl-=chunkwidth/5;
+      player.yl-=chunkwidth/5;
     }
     if (resize>=10){
       hit=false; /* no longer hitting the wall */
@@ -131,16 +137,13 @@ function calculate(){
   }
   if (runtime>500){ /* if the player doesn't hit a wall for a while */
     resize++; /* increase the resize counter */
-    if (resize<10&&player.xl<50){ /* increase the size of the player */
+    if (resize<10&&player.xl<chunkwidth*5){ /* increase the size of the player */
       player.xl++;
       player.yl++;
     }
     if (resize>=10){ /* if the resize counter hits 10 */
       resize=0; /* reset the counter */
       runtime=0; /* reset the run time counter */
-      if (player.xl<50){
-      //  playerspeed--; /* lower the player drop speed */
-      }
     }
   }
   movewalls();
@@ -170,8 +173,8 @@ function draw(){
     cv.strokeRect(wall.x[i],wall.y[i],wallwidth,wall.l[i]);
     /* write score on screen */
     cv.fillStyle="black";
-    cv.font="50px Arial";
-    cv.fillText(score, width-200,100)
+    cv.font="1em Arial";
+    cv.fillText(score, chunkwidth*90,chunkheight*10)
   }
   return;
 }
@@ -201,8 +204,8 @@ function wallcalc(){
 
 function checkposition(){
   var numwalls=wall.x.length;
-  if (player.y+player.yl>=canheight){
-    player.y=canheight-player.yl;
+  if (player.y+player.yl>=height){
+    player.y=height-player.yl;
   }
   if (player.y<=0){
     player.y=0;
@@ -254,7 +257,7 @@ function endcondition(){
 
 function nextlevel(){
   speed++;
-  playerspeed++;
+  playerspeed+=0.33;
   fadeoutaudio(music);
   level.music.splice(0,1);
   music=new Audio(level.music[0]);
