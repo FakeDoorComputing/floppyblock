@@ -64,9 +64,10 @@ function randomstart(key){
     if (toporbottom==1){ /* random top or bottom */
       return 0;
     }
-    var num=randomnumber(height);
-    if (num<200){
-      num+=200; /* don't allow a height above 200, this stops the wall from being so high you can't get over it */
+    var num=randomnumber(chunkheight*70);
+    console.log(num)
+    if (num<100){
+      num+=100; /* don't allow a height above 200, this stops the wall from being so high you can't get over it */
     }
     return num;
     break;
@@ -74,8 +75,8 @@ function randomstart(key){
     default:
     if (key==0){ /* if the wall starts from the top */
       var num=randomnumber(height); /* get a random height */
-      if (num>height-200){ /* don't allow the wall to be so low you can't get under it */
-        num-=200;
+      if (num>height-100){ /* don't allow the wall to be so low you can't get under it */
+        num-=100;
       }
       return num;
     }
@@ -214,6 +215,7 @@ function checkposition(){
     if (wall.x[i]<player.x+player.xl&&wall.x[i]+wallwidth>player.x&&
     wall.y[i]<player.y+player.yl&&wall.y[i]+wall.l[i]>player.y){
       canvascolour=randomcolour();
+      console.log("wall "+wall.l[i])
       hit=true;
     }
   }
