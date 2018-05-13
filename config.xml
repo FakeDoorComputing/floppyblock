@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- config.xml reference: https://build.phonegap.com/docs/config-xml -->
+<widget xmlns     = "http://www.w3.org/ns/widgets"
+        xmlns:gap = "http://phonegap.com/ns/1.0"
+        id        = "floppy.block"
+        version   = "0.1">
+
+    <name>Floppy Block</name>
+
+    <description>
+        A new take on the 'Flappy Bird' type game
+    </description>
+
+    <author href="symonhambrey.worcestercomputing.com" email="symonhambrey@gmail.com">
+        WBS Computing
+    </author>
+
+    <preference name="phonegap-version" value="cli-7.0.1" />
+
+    <preference name="permissions" value="none"/>
+
+	<access origin="*"/>
+   	<plugin name="cordova-plugin-whitelist" version="1" />
+</widget>
