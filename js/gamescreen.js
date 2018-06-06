@@ -1,11 +1,19 @@
 var width, height, chunkwidth, chunkheight, canvas, cv, distance=200, wallwidth, playerspeed=1;
-var gamespeed=30, score=0, upordown=0, runtime=0;
+var gamespeed=30, score=0, upordown=0, runtime=0, drop=0, giftdrop=false, gift_on_screen, currentgift, gifttopress=false;
 var wall={"x":[],"y":[],"l":[],"c":[]};
 var speed=5, running=true, playermove=false, hit=false, resize=0;
+var gift={"x":600,"y":-50,"xl":32,"yl":32};
 var player={"x":50,"y":100,"xl":50,"yl":50};
 var level={"music":["snd/levelOne.mp3","snd/levelTwo.mp3","snd/levelThree.mp3","snd/levelFour.mp3"]}
 var music=new Audio(level.music[0]);
 var defeat=new Audio("snd/Defeat.mp3");
+var ding=new Audio("snd/ding.mp3");
+var gift_a=new Image;
+var gift_b=new Image;
+var gift_c=new Image;
+gift_a.src="img/gift_01a.png";
+gift_b.src="img/gift_01b.png";
+gift_c.src="img/gift_01c.png";
 var status, canvascolour, nowheight;
 
 $(document).on("pagecreate", "#gamescreen", function(){
@@ -16,6 +24,7 @@ $(document).on("pagecreate", "#gamescreen", function(){
   })
   setcanvas();
   screensize();
+  setgift();
   walls();
   fadeinaudio(music);
   drawgamescreen();
@@ -27,7 +36,7 @@ function setcanvas(){ /* set the canvas variables */
   return;
 }
 
-function screensize(){ /* set the screensize */
+function screensize(){ /* set the screensize and size of sprites */
   height=$(window).height();
   width=$(window).width();
   cvs.width=width;
@@ -37,8 +46,24 @@ function screensize(){ /* set the screensize */
   canvascolour=randomcolour();
   wallwidth=chunkwidth;
   player={"x":50,"y":100,"xl":chunkwidth*5,"yl":chunkwidth*5};
-  console.log(chunkwidth+" "+player.xl) // NOTE: remove when done
+  //console.log(chunkwidth+" "+player.xl) // NOTE: remove when done
+  gift.x=width;
+  gift.xl=chunkwidth*4;
+  gift.yl=chunkwidth*4;
   return;
+}
+
+function setgift(){
+  var num=randomnumber(3);
+  if(num==1){
+    gift_on_screen=gift_a;
+  }
+  else if(num==2){
+    gift_on_screen=gift_b;
+  }
+  else{
+    gift_on_screen=gift_c;
+  }
 }
 
 function walls(){ /* put ten walls into array */
@@ -65,7 +90,7 @@ function randomstart(key){
       return 0;
     }
     var num=randomnumber(chunkheight*70);
-    console.log(num)
+    //console.log(num)
     if (num<100){
       num+=100; /* don't allow a height above 200, this stops the wall from being so high you can't get over it */
     }
@@ -102,7 +127,25 @@ function drawgamescreen(){
 }
 
 function calculate(){
-  runtime++ /* increase the runtime counter */
+  runtime++; /* increase the runtime counter */
+  drop++;
+  if(drop%500==0){
+    setgift();
+    giftdrop=true;
+  }
+  if(giftdrop){
+    gift.x-=speed;
+    gift.y+=2;
+    if(gift.y+gift.yl>=height){
+      giftdrop=false;
+      gift.y=gift.y-gift.yl;
+    }
+    if(gift.x<=0-gift.xl){
+      giftdrop=false;
+      gift.x=width;
+      gift.y=0-gift.yl;
+    }
+  }
   if (playermove){ /* if the screen has been tapped */
     upordown++; /* increase the counter */
     if (player.y>=0&&upordown<40){ /* if the player is not at the top of the screen already */
@@ -153,6 +196,7 @@ function calculate(){
 }
 
 function draw(){
+  //console.log(drop)
   cv.clearRect(0,0,cvs.width,cvs.height);
   cv.beginPath();
   /* draw background colour */
@@ -172,10 +216,16 @@ function draw(){
     /* draw outline of walls */
     cv.strokeStyle="#fff";
     cv.strokeRect(wall.x[i],wall.y[i],wallwidth,wall.l[i]);
+    /* draw gift drop */
+    cv.drawImage(gift_on_screen,gift.x,gift.y,gift.xl,gift.yl);
     /* write score on screen */
     cv.fillStyle="black";
     cv.font="1em Arial";
     cv.fillText(score, chunkwidth*90,chunkheight*10)
+    /* draw current gift collected */
+    if (gifttopress){
+      cv.drawImage(currentgift, chunkwidth*90,chunkheight*85,chunkheight*10,chunkheight*10);
+    }
   }
   return;
 }
@@ -215,11 +265,24 @@ function checkposition(){
     if (wall.x[i]<player.x+player.xl&&wall.x[i]+wallwidth>player.x&&
     wall.y[i]<player.y+player.yl&&wall.y[i]+wall.l[i]>player.y){
       canvascolour=randomcolour();
-      console.log("wall "+wall.l[i])
+      //console.log("wall "+wall.l[i])
       hit=true;
     }
   }
+  if (gift.x<player.x+player.xl&&gift.x+gift.xl>player.x&&
+  gift.y<player.y+player.yl&&gift.y+gift.yl>player.y){
+    giftreceived();
+  }
   return;
+}
+
+function giftreceived(){
+  gift.x=width;
+  gift.y=0-gift.xl;
+  giftdrop=false;
+  ding.play();
+  currentgift=gift_on_screen;
+  gifttopress=true;
 }
 
 function fadeoutaudio(p_audio){
